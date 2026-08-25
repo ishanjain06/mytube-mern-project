@@ -1,2 +1,77 @@
-import dotenv from "dotenv";import bcrypt from "bcryptjs";import {connectDB}from"./config/db.js";import User from"./models/User.js";import Channel from"./models/Channel.js";import Video from"./models/Video.js";import Comment from"./models/Comment.js";
-dotenv.config();await connectDB();await Promise.all([User.deleteMany(),Channel.deleteMany(),Video.deleteMany(),Comment.deleteMany()]);const user=await User.create({username:"Demo User",email:"demo@mytube.com",password:await bcrypt.hash("demo123",10),avatar:"https://api.dicebear.com/9.x/initials/svg?seed=Demo"});const channel=await Channel.create({channelName:"Code Corner",owner:user._id,description:"Simple coding lessons and project walkthroughs."});await User.findByIdAndUpdate(user._id,{$push:{channels:channel._id}});const clip="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",thumb="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80";const data=[["Learn React Basics in 30 Minutes","Education"],["Build a Simple MERN Project","Technology"],["Relaxing Coding Music","Music"],["Beginner Gaming Setup Tour","Gaming"],["Tech News This Week","News"],["Fun Weekend Challenge","Entertainment"]];const videos=await Video.insertMany(data.map(([title,category],i)=>({title,category,thumbnailUrl:`${thumb}&sig=${i}`,videoUrl:clip,description:`A sample ${category.toLowerCase()} video for MyTube.`,channel:channel._id,uploader:user._id,views:1200+i*341})));await Channel.findByIdAndUpdate(channel._id,{$push:{videos:{$each:videos.map(v=>v._id)}}});await Comment.create({video:videos[0]._id,user:user._id,text:"Welcome to the MyTube sample data!"});console.log("Seed complete. Login: demo@mytube.com / demo123");process.exit();
+import dotenv from "dotenv";
+import bcrypt from "bcryptjs";
+import { connectDB } from "./config/db.js";
+import User from "./models/User.js";
+import Channel from "./models/Channel.js";
+import Video from "./models/Video.js";
+import Comment from "./models/Comment.js";
+
+dotenv.config();
+
+await connectDB();
+
+await Promise.all([
+  User.deleteMany(),
+  Channel.deleteMany(),
+  Video.deleteMany(),
+  Comment.deleteMany()
+]);
+
+const user = await User.create({
+  username: "Demo User",
+  email: "demo@mytube.com",
+  password: await bcrypt.hash("demo123", 10),
+  avatar: "https://api.dicebear.com/9.x/initials/svg?seed=Demo"
+});
+
+const channel = await Channel.create({
+  channelName: "Code Corner",
+  owner: user._id,
+  description: "Simple coding lessons and project walkthroughs."
+});
+
+await User.findByIdAndUpdate(user._id, {
+  $push: { channels: channel._id }
+});
+
+const clip =
+  "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4";
+
+const thumb =
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80";
+
+const data = [
+  ["Learn React Basics in 30 Minutes", "Education"],
+  ["Build a Simple MERN Project", "Technology"],
+  ["Relaxing Coding Music", "Music"],
+  ["Beginner Gaming Setup Tour", "Gaming"],
+  ["Tech News This Week", "News"],
+  ["Fun Weekend Challenge", "Entertainment"]
+];
+
+const videos = await Video.insertMany(
+  data.map(([title, category], i) => ({
+    title,
+    category,
+    thumbnailUrl: `${thumb}&sig=${i}`,
+    videoUrl: clip,
+    description: `A sample ${category.toLowerCase()} video for MyTube.`,
+    channel: channel._id,
+    uploader: user._id,
+    views: 1200 + i * 341
+  }))
+);
+
+await Channel.findByIdAndUpdate(channel._id, {
+  $push: { videos: { $each: videos.map(v => v._id) } }
+});
+
+await Comment.create({
+  video: videos[0]._id,
+  user: user._id,
+  text: "Welcome to the MyTube sample data!"
+});
+
+console.log("Seed complete. Login: demo@mytube.com / demo123");
+
+process.exit();
