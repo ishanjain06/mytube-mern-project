@@ -340,12 +340,17 @@ app.get("/api/comments/:videoId", async (req, res) =>
   )
 );
 
-app.post("/api/comments/:videoId", auth, async (req, res) => {
-  if (!req.body.text?.trim()) {
+app.post("/api/auth/login", async (req, res) => {
+  const email = req.body.email?.trim().toLowerCase();
+  const password = req.body.password;
+
+  if (!email || !password) {
     return res.status(400).json({
-      message: "Comment cannot be empty.",
+      message: "Email and password are required.",
     });
   }
+
+  const u = await User.findOne({ email });
 
   const c = await Comment.create({
     video: req.params.videoId,
