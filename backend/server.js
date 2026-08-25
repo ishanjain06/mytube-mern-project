@@ -268,17 +268,19 @@ app.delete("/api/videos/:id", auth, async (req, res) => {
 app.post("/api/videos/:id/rate", auth, async (req, res) => {
   const v = await Video.findById(req.params.id);
 
-  if (!v || !["like", "dislike"].includes(req.body.type)) {
-    return res.status(400).json({
-      message: "Invalid rating request.",
-    });
-  }
+  const ratingType = req.body.type?.trim().toLowerCase();
+
+if (!v || !["like", "dislike"].includes(ratingType)) {
+  return res.status(400).json({
+    message: "Invalid rating request.",
+  });
+}
 
   const id = req.user.id;
   const inLikes = v.likedBy.map(String).includes(id);
   const inDislikes = v.dislikedBy.map(String).includes(id);
 
-  if (req.body.type === "like") {
+  if (ratingType === "like") {
     v.likedBy = inLikes
       ? v.likedBy.filter((x) => String(x) !== id)
       : [...v.likedBy, id];
