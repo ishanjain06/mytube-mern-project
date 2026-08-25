@@ -260,9 +260,10 @@ app.delete("/api/videos/:id", auth, async (req, res) => {
 
   await v.deleteOne();
 
-  res.json({
-    message: "Video deleted.",
-  });
+ res.json({
+  message: "Video deleted successfully.",
+  videoId: v._id,
+});
 });
 
 app.post("/api/videos/:id/rate", auth, async (req, res) => {
