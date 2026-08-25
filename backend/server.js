@@ -440,13 +440,13 @@ app.delete("/api/comments/:id", auth, async (req, res) => {
   });
 
   if (!c) {
-    return res.status(403).json({
-      message: "You can only delete your own comments.",
+    return res.status(404).json({
+      message: "Comment not found or you do not have permission to delete it.",
     });
   }
 
   res.json({
-    message: "Comment deleted.",
+    message: "Comment deleted successfully.",
   });
 });
 
