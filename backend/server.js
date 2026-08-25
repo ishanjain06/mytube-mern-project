@@ -33,5 +33,9 @@ app.get("/api/comments/:videoId", async (req, res) => res.json(await Comment.fin
 app.post("/api/comments/:videoId", auth, async (req, res) => { if (!req.body.text?.trim()) return res.status(400).json({ message: "Comment cannot be empty." }); const c = await Comment.create({ video: req.params.videoId, user: req.user.id, text: req.body.text }); res.status(201).json(await c.populate("user", "username avatar")); });
 app.put("/api/comments/:id", auth, async (req, res) => { const c = await Comment.findOne({ _id: req.params.id, user: req.user.id }); if (!c) return res.status(403).json({ message: "You can only edit your own comments." }); c.text = req.body.text?.trim(); if (!c.text) return res.status(400).json({ message: "Comment cannot be empty." }); await c.save(); res.json(c); });
 app.delete("/api/comments/:id", auth, async (req, res) => { const c = await Comment.findOneAndDelete({ _id: req.params.id, user: req.user.id }); if (!c) return res.status(403).json({ message: "You can only delete your own comments." }); res.json({ message: "Comment deleted." }); });
+app.use((req, res) => {
+  res.status(404).json({ message: "API route not found." });
+});
 app.use((err, req, res, next) => res.status(500).json({ message: "Server error. Please try again." }));
 connectDB(); app.listen(process.env.PORT || 5000, () => console.log(`Server running on port ${process.env.PORT || 5000}`));
+g
