@@ -332,9 +332,13 @@ const c = await Channel.create({
   res.status(201).json(c);
 });
 
-app.get("/api/channels/mine", auth, async (req, res) =>
-  res.json(await Channel.find({ owner: req.user.id }))
-);
+app.get("/api/channels/mine", auth, async (req, res) => {
+  const channels = await Channel.find({
+    owner: req.user.id,
+  }).sort({ createdAt: -1 });
+
+  res.json(channels);
+});
 
 app.get("/api/channels/:id", async (req, res) => {
   const channel = await Channel.findById(req.params.id).populate(
