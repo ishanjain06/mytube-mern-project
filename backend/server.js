@@ -355,7 +355,9 @@ app.get("/api/comments/:videoId", async (req, res) =>
 );
 
 app.post("/api/comments/:videoId", auth, async (req, res) => {
-  if (!req.body.text?.trim()) {
+  const commentText = req.body.text?.trim();
+
+  if (!commentText) {
     return res.status(400).json({
       message: "Comment cannot be empty.",
     });
@@ -364,7 +366,7 @@ app.post("/api/comments/:videoId", auth, async (req, res) => {
   const c = await Comment.create({
     video: req.params.videoId,
     user: req.user.id,
-    text: req.body.text.trim(),
+   text: commentText,
   });
 
   res.status(201).json(
