@@ -177,11 +177,17 @@ app.post("/api/videos", auth, async (req, res) => {
   const category = req.body.category?.trim();
   const channelId = req.body.channelId?.trim();
 
-  if (![title, thumbnailUrl, videoUrl, category, channelId].every(Boolean)) {
-    return res.status(400).json({
-      message: "Complete all required video fields.",
-    });
-  }
+ if (![title, thumbnailUrl, videoUrl, category, channelId].every(Boolean)) {
+  return res.status(400).json({
+    message: "Complete all required video fields.",
+  });
+}
+
+if (!/^https?:\/\//i.test(videoUrl)) {
+  return res.status(400).json({
+    message: "Video URL must be a valid HTTP or HTTPS URL.",
+  });
+}
 
   const c = await Channel.findOne({
     _id: channelId,
