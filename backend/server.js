@@ -94,9 +94,17 @@ app.post("/api/auth/register", async (req, res) => {
 
 app.post("/api/auth/login", async (req, res) => {
   const email = req.body.email?.trim().toLowerCase();
+  const password = req.body.password;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      message: "Email and password are required.",
+    });
+  }
+
   const u = await User.findOne({ email });
 
-  if (!u || !(await bcrypt.compare(req.body.password || "", u.password))) {
+  if (!u || !(await bcrypt.compare(password, u.password))) {
     return res.status(401).json({
       message: "Incorrect email or password.",
     });
@@ -118,18 +126,18 @@ app.get("/api/videos", async (req, res) => {
 
   const search = req.query.search?.trim();
 
-if (search) {
-  q.title = {
-    $regex: search,
-    $options: "i",
-  };
-}
+  if (search) {
+    q.title = {
+      $regex: search,
+      $options: "i",
+    };
+  }
 
   const category = req.query.category?.trim();
 
-if (category && category !== "All") {
-  q.category = category;
-}
+  if (category && category !== "All") {
+    q.category = category;
+  }
 
   res.json(
     await Video.find(q)
@@ -161,14 +169,12 @@ app.get("/api/videos/:id", async (req, res) => {
 });
 
 app.post("/api/videos", auth, async (req, res) => {
-  const {
-    title,
-    thumbnailUrl,
-    videoUrl,
-    description,
-    category,
-    channelId,
-  } = req.body;
+  const title = req.body.title?.trim();
+  const thumbnailUrl = req.body.thumbnailUrl?.trim();
+  const videoUrl = req.body.videoUrl?.trim();
+  const description = req.body.description?.trim() || "";
+  const category = req.body.category?.trim();
+  const channelId = req.body.channelId?.trim();
 
   if (![title, thumbnailUrl, videoUrl, category, channelId].every(Boolean)) {
     return res.status(400).json({
@@ -344,22 +350,17 @@ app.get("/api/comments/:videoId", async (req, res) =>
   )
 );
 
-app.post("/api/auth/login", async (req, res) => {
-  const email = req.body.email?.trim().toLowerCase();
-  const password = req.body.password;
-
-  if (!email || !password) {
+app.post("/api/comments/:videoId", auth, async (req, res) => {
+  if (!req.body.text?.trim()) {
     return res.status(400).json({
-      message: "Email and password are required.",
+      message: "Comment cannot be empty.",
     });
   }
-
-  const u = await User.findOne({ email });
 
   const c = await Comment.create({
     video: req.params.videoId,
     user: req.user.id,
-    text: req.body.text,
+    text: req.body.text.trim(),
   });
 
   res.status(201).json(
