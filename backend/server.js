@@ -467,7 +467,13 @@ app.use((err, req, res, next) => {
   });
 });
 
-connectDB();
+connectDB()
+  .then(() => {
+    console.log("Database connection initialized.");
+  })
+  .catch((error) => {
+    console.error("Database startup failed:", error.message);
+  });
 
 const PORT = process.env.PORT || 5000;
 

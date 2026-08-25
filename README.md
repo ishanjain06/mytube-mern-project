@@ -34,3 +34,6 @@ Sample login after seeding: `demo@mytube.com` / `demo123`.
 ## Recommended meaningful commits
 
 Create the 30 required commits as development milestones: repository setup, Vite setup, Express setup, MongoDB connection, each model, auth, middleware, home UI, header, sidebar, search, categories, video API/UI, player, rating, comments API/UI, channel API/UI, upload, editing, deleting, responsiveness, seed script, README, testing, and final review. Make commits only when the described work is actually complete.
+## Project Status
+
+The application has been tested locally with MongoDB Atlas and includes authentication, video playback, search, category filtering, ratings, comments, channel management, and video management features.
