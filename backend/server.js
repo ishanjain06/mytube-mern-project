@@ -300,12 +300,13 @@ app.post("/api/videos/:id/rate", auth, async (req, res) => {
 });
 
 app.post("/api/channels", auth, async (req, res) => {
-  if (!req.body.channelName?.trim()) {
+  const channelName = req.body.channelName?.trim();
+
+  if (!channelName) {
     return res.status(400).json({
       message: "Channel name is required.",
     });
   }
-
   const c = await Channel.create({
     ...req.body,
     owner: req.user.id,
