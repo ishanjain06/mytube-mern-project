@@ -14,8 +14,8 @@ MyTube is a student-level MERN capstone application for discovering, watching, a
 ## Run the project
 
 1. Copy `backend/.env.example` to `backend/.env` and set `MONGO_URI` and `JWT_SECRET`.
-2. In `backend`, run `npm install`, then `npm run seed` for sample content and `npm run dev`.
-3. In `frontend`, run `npm install`, then `npm run dev`.
+2. In `backend`, run `pnpm install`, then `pnpm run seed` for sample content and `pnpm run dev`.
+3. In `frontend`, run `pnpm install`, then `pnpm run dev`
 4. Open the Vite URL shown in the terminal (usually `http://localhost:5173`).
 
 Sample login after seeding: `demo@mytube.com` / `demo123`.
