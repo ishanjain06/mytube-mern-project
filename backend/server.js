@@ -161,12 +161,13 @@ app.get("/api/videos/:id", async (req, res) => {
     }
 
     res.json(v);
-  } catch {
-    res.status(400).json({
-      message: "Invalid video id.",
-    });
-  }
-});
+ } catch (error) {
+  console.error("Video lookup failed:", error.message);
+
+  res.status(400).json({
+    message: "Invalid video id.",
+  });
+}
 
 app.post("/api/videos", auth, async (req, res) => {
   const title = req.body.title?.trim();
