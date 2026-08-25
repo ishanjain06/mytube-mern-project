@@ -219,14 +219,16 @@ app.put("/api/videos/:id", auth, async (req, res) => {
     });
   }
 
-  ["title", "thumbnailUrl", "videoUrl", "description", "category"].forEach(
-    (key) => {
-      if (req.body[key] !== undefined) {
-        v[key] = req.body[key];
-      }
+ ["title", "thumbnailUrl", "videoUrl", "description", "category"].forEach(
+  (key) => {
+    if (req.body[key] !== undefined) {
+      v[key] =
+        typeof req.body[key] === "string"
+          ? req.body[key].trim()
+          : req.body[key];
     }
-  );
-
+  }
+);
   await v.save();
 
   res.json(v);
