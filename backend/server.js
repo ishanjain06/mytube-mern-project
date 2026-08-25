@@ -410,17 +410,15 @@ app.post("/api/comments/:videoId", auth, async (req, res) => {
   );
 });
 
-app.put("/api/comments/:id", auth, async (req, res) => {
-  const c = await Comment.findOne({
-    _id: req.params.id,
-    user: req.user.id,
-  });
+const commentText = req.body.text?.trim();
 
-  if (!c) {
-    return res.status(403).json({
-      message: "You can only edit your own comments.",
-    });
-  }
+if (!commentText) {
+  return res.status(400).json({
+    message: "Comment cannot be empty.",
+  });
+}
+
+c.text = commentText;
 
   c.text = req.body.text?.trim();
 
