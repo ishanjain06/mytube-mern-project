@@ -12,8 +12,22 @@ import Comment from "./models/Comment.js";
 dotenv.config();
 const app = express(); app.use(cors()); app.use(express.json());
 const tokenFor = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-const auth = (req, res, next) => { const t = req.headers.authorization?.split(" ")[1]; try { req.user = jwt.verify(t, process.env.JWT_SECRET); next(); } catch { res.status(401).json({ message: "Please log in to continue." }); } };
-const ownVideo = async (id, user) => Video.findOne({ _id: id, uploader: user });
+const auth = (req, res, next) => {
+  const header = req.headers.authorization;
+
+  if (!header?.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Authentication token is required." });
+  }
+
+  const token = header.split(" ")[1];
+
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    return res.status(401).json({ message: "Please log in to continue." });
+  }
+};
 
 app.post("/api/auth/register", async (req, res) => { try { const { username, email, password } = req.body; if (!username || !email || !password) return res.status(400).json({ message: "Username, email and password are required." }); if (!/^\S+@\S+\.\S+$/.test(email)) return res.status(400).json({ message: "Enter a valid email address." }); if (password.length < 6) return res.status(400).json({ message: "Password must be at least 6 characters." }); if (await User.findOne({ email: email.toLowerCase() })) return res.status(409).json({ message: "An account already exists with this email." }); await User.create({ username, email, password: await bcrypt.hash(password, 10), avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(username)}` }); res.status(201).json({ message: "Registration successful. Please log in." }); } catch (e) { res.status(400).json({ message: e.message }); } });
 app.post("/api/auth/login", async (req, res) => { const u = await User.findOne({ email: req.body.email?.toLowerCase() }); if (!u || !(await bcrypt.compare(req.body.password || "", u.password))) return res.status(401).json({ message: "Incorrect email or password." }); res.json({ token: tokenFor(u._id), user: { id: u._id, username: u.username, email: u.email, avatar: u.avatar } }); });
