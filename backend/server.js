@@ -116,12 +116,14 @@ app.post("/api/auth/login", async (req, res) => {
 app.get("/api/videos", async (req, res) => {
   const q = {};
 
-  if (req.query.search) {
-    q.title = {
-      $regex: req.query.search,
-      $options: "i",
-    };
-  }
+  const search = req.query.search?.trim();
+
+if (search) {
+  q.title = {
+    $regex: search,
+    $options: "i",
+  };
+}
 
   if (req.query.category && req.query.category !== "All") {
     q.category = req.query.category;
