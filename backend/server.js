@@ -314,10 +314,16 @@ app.post("/api/channels", auth, async (req, res) => {
       message: "Channel name is required.",
     });
   }
-  const c = await Channel.create({
-    ...req.body,
-    owner: req.user.id,
-  });
+ const description = req.body.description?.trim() || "";
+const channelBanner = req.body.channelBanner?.trim() || "";
+
+const c = await Channel.create({
+  ...req.body,
+  channelName,
+  description,
+  channelBanner,
+  owner: req.user.id,
+});
 
   await User.findByIdAndUpdate(req.user.id, {
     $push: { channels: c._id },
