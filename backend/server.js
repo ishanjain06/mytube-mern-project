@@ -125,9 +125,11 @@ if (search) {
   };
 }
 
-  if (req.query.category && req.query.category !== "All") {
-    q.category = req.query.category;
-  }
+  const category = req.query.category?.trim();
+
+if (category && category !== "All") {
+  q.category = category;
+}
 
   res.json(
     await Video.find(q)
