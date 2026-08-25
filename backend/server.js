@@ -305,10 +305,10 @@ app.post("/api/channels", auth, async (req, res) => {
   }
 
   const c = await Channel.create({
-  ...req.body,
-  channelName: req.body.channelName.trim(),
-  owner: req.user.id,
-});
+    ...req.body,
+    owner: req.user.id,
+  });
+
   await User.findByIdAndUpdate(req.user.id, {
     $push: { channels: c._id },
   });
