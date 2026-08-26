@@ -35,7 +35,7 @@ await User.findByIdAndUpdate(user._id, {
 });
 
 const clip =
-  "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4";
+  "https://media.w3.org/2010/05/sintel/trailer.mp4";
 
 const thumb =
   "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80";

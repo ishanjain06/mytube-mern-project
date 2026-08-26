@@ -122,28 +122,35 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 app.get("/api/videos", async (req, res) => {
-  const q = {};
+  try {
+    const q = {};
 
-  const search = req.query.search?.trim();
+    const search = req.query.search?.trim();
 
-  if (search) {
-    q.title = {
-      $regex: search,
-      $options: "i",
-    };
+    if (search) {
+      q.title = {
+        $regex: search,
+        $options: "i",
+      };
+    }
+
+    const category = req.query.category?.trim();
+
+    if (category && category !== "All") {
+      q.category = category;
+    }
+
+    res.json(
+      await Video.find(q)
+        .populate("channel", "channelName")
+        .sort({ createdAt: -1 })
+    );
+  } catch (error) {
+    console.error("Video list failed:", error.message);
+    res.status(500).json({
+      message: "Unable to load videos. Please try again.",
+    });
   }
-
-  const category = req.query.category?.trim();
-
-  if (category && category !== "All") {
-    q.category = category;
-  }
-
-  res.json(
-    await Video.find(q)
-      .populate("channel", "channelName")
-      .sort({ createdAt: -1 })
-  );
 });
 
 app.get("/api/videos/:id", async (req, res) => {
@@ -167,7 +174,8 @@ app.get("/api/videos/:id", async (req, res) => {
   res.status(400).json({
     message: "Invalid video id.",
   });
-}
+ }
+});
 
 app.post("/api/videos", auth, async (req, res) => {
   const title = req.body.title?.trim();
@@ -369,20 +377,6 @@ app.get("/api/channels/:id", async (req, res) => {
   }
 });
 
-  if (!channel) {
-    return res.status(404).json({
-      message: "Channel not found.",
-    });
-  }
-
-  res.json({
-    channel,
-    videos: await Video.find({
-      channel: channel._id,
-    }).sort({ createdAt: -1 }),
-  });
-});
-
 app.get("/api/comments/:videoId", async (req, res) =>
   res.json(
     await Comment.find({
@@ -405,7 +399,7 @@ app.post("/api/comments/:videoId", auth, async (req, res) => {
   const c = await Comment.create({
     video: req.params.videoId,
     user: req.user.id,
-   text: commentText,
+    text: commentText,
   });
 
   res.status(201).json(
@@ -413,29 +407,32 @@ app.post("/api/comments/:videoId", auth, async (req, res) => {
   );
 });
 
-const commentText = req.body.text?.trim();
-
-if (!commentText) {
-  return res.status(400).json({
-    message: "Comment cannot be empty.",
+app.put("/api/comments/:id", auth, async (req, res) => {
+  const c = await Comment.findOne({
+    _id: req.params.id,
+    user: req.user.id,
   });
-}
 
-c.text = commentText;
+  if (!c) {
+    return res.status(403).json({
+      message: "You can only edit your own comments.",
+    });
+  }
 
-  c.text = req.body.text?.trim();
+  const commentText = req.body.text?.trim();
 
-  if (!c.text) {
+  if (!commentText) {
     return res.status(400).json({
       message: "Comment cannot be empty.",
     });
   }
 
+  c.text = commentText;
+
   await c.save();
 
   res.json(c);
 });
-
 app.delete("/api/comments/:id", auth, async (req, res) => {
   const c = await Comment.findOneAndDelete({
     _id: req.params.id,

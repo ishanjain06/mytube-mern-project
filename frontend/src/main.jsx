@@ -3,8 +3,78 @@ const api=axios.create({baseURL:import.meta.env.VITE_API_URL||"http://localhost:
 function Provider({children}){const[s,setS]=useState(()=>JSON.parse(localStorage.getItem("mytube-user")||"null"));const login=x=>{localStorage.setItem("mytube-user",JSON.stringify(x));setS(x)},logout=()=>{localStorage.removeItem("mytube-user");setS(null)};return <Auth.Provider value={{s,login,logout}}>{children}</Auth.Provider>}
 function Shell({children}){const[open,setOpen]=useState(false),{s,logout}=useAuth(),nav=useNavigate(),[q,setQ]=useState("");return <><header><button onClick={()=>setOpen(!open)}>☰</button><Link className="brand" to="/">My<span>Tube</span></Link><form onSubmit={e=>{e.preventDefault();nav(`/?search=${q}`)}}><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search videos"/><button>Search</button></form>{s?<><span>Hi, {s.user.username}</span><button onClick={logout}>Logout</button></>:<Link to="/login">Sign in</Link>}</header><aside className={open?"open":""}><button onClick={()=>setOpen(false)}>×</button><Link to="/">Home</Link>{s&&<><Link to="/create-channel">Create channel</Link><Link to="/upload">Upload video</Link></>}{cats.slice(1).map(x=><Link key={x} to={`/?category=${x}`}>{x}</Link>)}</aside><main>{children}</main></>}
 const Card=({v})=><Link className="card" to={`/watch/${v._id}`}><img src={v.thumbnailUrl}/><h3>{v.title}</h3><p>{v.channel?.channelName||"MyTube creator"}</p><small>{v.views.toLocaleString()} views · {new Date(v.uploadDate).toLocaleDateString()}</small></Link>;
-function Home(){const[sp]=useSearchParams(),cat=sp.get("category")||"All",search=sp.get("search")||"",[vs,setVs]=useState([]);useEffect(()=>{api.get("/videos",{params:{category:cat,search}}).then(r=>setVs(r.data))},[cat,search]);return <><nav className="filters">{cats.map(x=><Link className={x===cat?"active":""} key={x} to={`/?category=${x}${search?`&search=${search}`:""}`}>{x}</Link>)}</nav>{search&&<h2>Results for “{search}”</h2>}{vs.length?<section className="grid">{vs.map(v=><Card key={v._id} v={v}/>)}</section>:<p className="empty">No videos found.</p>}</>}
-function Login({register=false}){const{login}=useAuth(),nav=useNavigate(),[f,setF]=useState({username:"",email:"",password:""}),[e,setE]=useState("");const submit=async x=>{x.preventDefault();try{if(register){await api.post("/auth/register",f);nav("/login")}else{const r=await api.post("/auth/login",f);login(r.data);nav("/")}}catch(x){setE(err(x))}};return <div className="form"><h1>{register?"Register":"Login"}</h1><form onSubmit={submit}>{register&&<input required minLength="3" placeholder="Username" onChange={x=>setF({...f,username:x.target.value})}/>}<input required type="email" placeholder="Email" onChange={x=>setF({...f,email:x.target.value})}/><input required minLength="6" type="password" placeholder="Password" onChange={x=>setF({...f,password:x.target.value})}/>{e&&<p className="error">{e}</p>}<button>{register?"Register":"Login"}</button></form><Link to={register?"/login":"/register"}>{register?"Already have an account? Login":"Create an account"}</Link></div>}
+function Home() {
+  const [sp] = useSearchParams();
+  const cat = sp.get("category") || "All";
+  const search = sp.get("search") || "";
+  const [vs, setVs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    const params = { search };
+    const controller = new AbortController();
+
+    if (cat !== "All") {
+      params.category = cat;
+    }
+
+    setLoading(true);
+    setLoadError("");
+    setVs([]);
+
+    api
+      .get("/videos", { params, signal: controller.signal })
+      .then((r) => setVs(r.data))
+      .catch((requestError) => {
+        if (requestError.code === "ERR_CANCELED") return;
+
+        console.error("Unable to load videos", {
+          category: cat,
+          search,
+          error: requestError,
+        });
+        setLoadError(err(requestError));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [cat, search]);
+
+  return (
+    <>
+      <nav className="filters">
+        {cats.map((x) => (
+          <Link
+            className={x === cat ? "active" : ""}
+            key={x}
+            to={`/?category=${x}${search ? `&search=${search}` : ""}`}
+          >
+            {x}
+          </Link>
+        ))}
+      </nav>
+
+      {search && <h2>Results for “{search}”</h2>}
+
+      {loadError ? (
+        <p className="error">Could not load videos: {loadError}</p>
+      ) : loading ? (
+        <p className="empty">Loading videos...</p>
+      ) : vs.length ? (
+        <section className="grid">
+          {vs.map((v) => (
+            <Card key={v._id} v={v} />
+          ))}
+        </section>
+      ) : (
+        <p className="empty">No videos found.</p>
+      )}
+    </>
+  );
+}function Login({register=false}){const{login}=useAuth(),nav=useNavigate(),[f,setF]=useState({username:"",email:"",password:""}),[e,setE]=useState("");const submit=async x=>{x.preventDefault();try{if(register){await api.post("/auth/register",f);nav("/login")}else{const r=await api.post("/auth/login",f);login(r.data);nav("/")}}catch(x){setE(err(x))}};return <div className="form"><h1>{register?"Register":"Login"}</h1><form onSubmit={submit}>{register&&<input required minLength="3" placeholder="Username" onChange={x=>setF({...f,username:x.target.value})}/>}<input required type="email" placeholder="Email" onChange={x=>setF({...f,email:x.target.value})}/><input required minLength="6" type="password" placeholder="Password" onChange={x=>setF({...f,password:x.target.value})}/>{e&&<p className="error">{e}</p>}<button>{register?"Register":"Login"}</button></form><Link to={register?"/login":"/register"}>{register?"Already have an account? Login":"Create an account"}</Link></div>}
 const Protect=({children})=>useAuth().s?children:<Navigate to="/login"/>;
 function Watch(){const{id}=useParams(),{s}=useAuth(),[v,setV]=useState(),[cs,setCs]=useState([]),[text,setText]=useState(""),[e,setE]=useState("");const load=()=>{api.get(`/videos/${id}`).then(r=>setV(r.data)).catch(x=>setE(err(x)));api.get(`/comments/${id}`).then(r=>setCs(r.data))};useEffect(load,[id]);const rate=async type=>{if(!s)return setE("Please log in to rate videos.");const r=await api.post(`/videos/${id}/rate`,{type},headers(s.token));setV({...v,...r.data})};const comment=async x=>{x.preventDefault();try{const r=await api.post(`/comments/${id}`,{text},headers(s.token));setCs([r.data,...cs]);setText("")}catch(x){setE(err(x))}};const edit=async c=>{const text=prompt("Edit your comment",c.text);if(text?.trim()){const r=await api.put(`/comments/${c._id}`,{text},headers(s.token));setCs(cs.map(x=>x._id===c._id?{...x,text:r.data.text}:x))}};if(!v)return <p>{e||"Loading..."}</p>;return <div className="watch"><video controls poster={v.thumbnailUrl} src={v.videoUrl}/><h1>{v.title}</h1><p><Link to={`/channel/${v.channel._id}`}>{v.channel.channelName}</Link> · {v.views} views <button onClick={()=>rate("like")}>👍 {v.likes}</button><button onClick={()=>rate("dislike")}>👎 {v.dislikes}</button></p><p>{v.description}</p>{e&&<p className="error">{e}</p>}<section><h2>{cs.length} Comments</h2>{s?<form onSubmit={comment}><input value={text} onChange={x=>setText(x.target.value)} placeholder="Add a comment"/><button>Post</button></form>:<Link to="/login">Login to comment</Link>}{cs.map(c=><article key={c._id}><b>{c.user?.username}</b><p>{c.text}</p>{s?.user.id===c.user?._id&&<><button onClick={()=>edit(c)}>Edit</button><button onClick={async()=>{await api.delete(`/comments/${c._id}`,headers(s.token));setCs(cs.filter(x=>x._id!==c._id))}}>Delete</button></>}</article>)}</section></div>}
 function CreateChannel(){const{s}=useAuth(),nav=useNavigate(),[f,setF]=useState({channelName:"",description:"",channelBanner:""}),[e,setE]=useState("");return <div className="form"><h1>Create channel</h1><form onSubmit={async x=>{x.preventDefault();try{const r=await api.post("/channels",f,headers(s.token));nav(`/channel/${r.data._id}`)}catch(x){setE(err(x))}}}><input required placeholder="Channel name" onChange={x=>setF({...f,channelName:x.target.value})}/><textarea placeholder="Description" onChange={x=>setF({...f,description:x.target.value})}/><input placeholder="Banner URL" onChange={x=>setF({...f,channelBanner:x.target.value})}/>{e&&<p>{e}</p>}<button>Create</button></form></div>}
